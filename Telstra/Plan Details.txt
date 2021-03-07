@@ -1,0 +1,19 @@
+Mobile Number: 0455 668 780 
+Wi-Fi Name: HUAWEI_C22F
+Password for Wi-Fi and Device Login: 0TT3LHYTYT8
+
+Network: Heuwai
+
+How to check data left -
+
+Go to browser on any ISP: https://myid.telstra.com/identity/as/authorization.oauth2?client_id=mytelstra&redirect_uri=https%3A%2F%2Fwww.myservices.telstra.com.au%2Fmytelstra%2Flogin-intermediate&response_type=code&scope=openid+app.mytelstra&state=8417d3ddea3c4b2ba6d6342bf13805af1bdaa8d4db0d481abcb7849116cc3cc09cc669c2e22e4b61b10e48b15ed309bd&code_challenge=xjhLG7FWHi7hb3P5qMnvgeREiV9mM8uGoaBT7h-eIgE&code_challenge_method=S256
+Enter email: jake.garth@students.mq.edu.au
+Password: Sh......
+Go to services
+
+Done
+
+Telstra Details:
+Email: jake.garth@students.mq.edu.au
+Address: 6 Albermarle Street, Dundas, NSW 2117
+Password: Sh................
