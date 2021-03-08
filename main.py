@@ -4,8 +4,7 @@ from website_functions import *
 import pydnsbl
 
 
-def main():
-
+def getResponseCodeList():
     websiteList = []
     with open("CopyRight_Telstra.txt") as fp:
         Lines = fp.readlines()
@@ -15,7 +14,7 @@ def main():
 
     ourIP = str(getIPAddress())
 
-    AARNFile =  open(ourIP,"w", encoding="utf-8")
+    AARNFile =  open("testing.txt","w", encoding="utf-8")
     for item in websiteList:
         positionofWWW = item.find('://')
 
@@ -27,15 +26,34 @@ def main():
             responseCODE = requestResults.get('RespondeCode')
             print(responseCODE)
         except Exception as e:
+
             responseCODE = str(e)
             print(responseCODE)
-        AARNFile.write(item + "," + str(responseCODE) + "\n")
+
+        try:
+            WebsiteNOHttpNoSlash = WebsiteNOHttp.replace('/',"")
+            IP = getIPAddressOfDomain(WebsiteNOHttpNoSlash)
+            print("IP")
+            print(IP)
+
+        except Exception as e:
+            IP = str(e)
+
+        responseCODE = responseCODE.replace(',',';')
+        AARNFile.write(item + "," + str(responseCODE) +"," +IP + "\n")
+
     AARNFile.close()
 
 
-    print(getIPAddress())
 
-    requestWebsite("www.google.com")
+
+def main():
+    getResponseCodeList()
+
+
+
+
+
 
 
 if __name__ == "__main__":

@@ -46,6 +46,17 @@ def getWebsitesFromText(text):
     return httpList
 
 
+def getIPAddressOfDomain(websiteURL):
+
+    try:
+        result = socket.gethostbyname_ex(websiteURL)
+        IPaddress = str(result[2]).replace(',',";")
+    except Exception as e:
+        IPaddress = str(e)
+
+    return IPaddress
+
+
 def getIPAddress():
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
