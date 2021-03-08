@@ -6,7 +6,7 @@ import pydnsbl
 
 def getResponseCodeList():
     websiteList = []
-    with open("CopyRight_Telstra.txt") as fp:
+    with open("100MostVisitedSites.txt") as fp:
         Lines = fp.readlines()
     for line in Lines:
         websiteList.append(line.strip('\n'))
@@ -14,11 +14,12 @@ def getResponseCodeList():
 
     ourIP = str(getIPAddress())
 
-    AARNFile =  open("testing.txt","w", encoding="utf-8")
+    AARNFile =  open("Most_Visited.txt","w", encoding="utf-8")
     for item in websiteList:
         positionofWWW = item.find('://')
 
-        WebsiteNOHttp = item[positionofWWW+3:]
+        #If http in domain name, change to + 3, if no http, change to +1
+        WebsiteNOHttp = item[positionofWWW+1:]
         print(WebsiteNOHttp)
         try:
 
