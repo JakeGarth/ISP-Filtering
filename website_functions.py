@@ -4,6 +4,7 @@ from bs4.element import Comment
 import socket
 from scapy.all import *
 import dns.resolver
+from nslookup import Nslookup
 
 
 
@@ -148,3 +149,63 @@ def scapyTracerouteWithSR(domain):
                 hops.append(rcv.src)
 
     return hops
+
+
+def getMyDNS():
+    dns_resolver = dns.resolver.Resolver()
+    return dns_resolver.nameservers[0]
+
+
+def getIPSpecificDNS():
+    #this is legacy code I think
+    answer = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname='www.thepacketgeek.com')), verbose=0)
+
+    print(answer)
+    print(answer[DNS].summary())
+
+
+def tryingDifferentDNS():
+    my_resolver = dns.resolver.Resolver()
+    # 8.8.8.8 is Google's public DNS server
+    my_resolver.nameservers = ['8.8.8.8']
+
+    answer = my_resolver.query('google.com')
+
+    res = dns.resolver.Resolver(configure=False)
+    res.nameservers = [ '8.8.8.8', '2001:4860:4860::8888',
+                        '8.8.4.4', '2001:4860:4860::8844' ]
+    r = res.query('example.org', 'a')
+    print(r)
+    print(answer)
+
+
+def listOfDNSs():
+    MyDNS = getMyDNS()
+    AARNet = "10.127.5.17"
+    OptusDNS = "192.168.43.202"
+    GoogleDNS = "8.8.8.8"
+    Cloudflare = "1.1.1.1"
+
+
+    DNSList = [MyDNS, AARNet, OptusDNS, GoogleDNS, Cloudflare]
+    return DNSList
+
+
+def resolveIPFromDNS(hostname, DNSList):
+    domain = hostname
+    compiledList = []
+    # set optional Cloudflare public DNS server
+    for DNSIP in DNSList:
+        dns_query = Nslookup(dns_servers=[DNSIP])
+
+        ips_record = dns_query.dns_lookup(domain)
+        print(ips_record.response_full, ips_record.answer)
+
+        soa_record = dns_query.soa_lookup(domain)
+        print(soa_record.response_full, soa_record.answer)
+        tuple = (DNSIP, ips_record.answer)
+        compiledList.append(tuple)
+        tuple = ()
+
+
+    return compiledList
