@@ -4,6 +4,11 @@ from website_functions import *
 import pydnsbl
 import csv
 from nslookup import Nslookup
+from domain import Domain
+import ipaddress
+
+
+
 
 def getResolvedIPs(TupleList):
     IPAddresses = []
@@ -23,6 +28,40 @@ def writeToCSVMethod(mylist, fileName):
     with open(fileName, 'a', newline='') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(mylist)
+
+
+def InsertResultsDomain(domainObject):
+    domainName = domainObject.domain
+    print("Domain name: "+domainName)
+
+
+
+def stripDomainName(domainName):
+    positionofWWW = domainName.find('://')
+
+    if "http" in domainName:
+        WebsiteNOHttp = domainName[positionofWWW+3:]
+    else:
+    #If http in domain name, change to + 3, if no http, change to +1
+        WebsiteNOHttp = domainName[positionofWWW+1:]
+
+
+    WebsiteNOHttpNoSlash = WebsiteNOHttp.replace('/',"")
+
+    if 'www.' == WebsiteNOHttp[0:4]:
+        print("change")
+        WebsiteNoWWWNoSlash = WebsiteNOHttp[4:]
+    else:
+        WebsiteNoWWWNoSlash = WebsiteNOHttp
+    if '/' == WebsiteNoWWWNoSlash[-1]:
+        WebsiteNoWWWNoSlash = WebsiteNoWWWNoSlash[0:-1]
+
+    print(domainName)
+    print(WebsiteNoWWWNoSlash)
+    print(WebsiteNOHttp)
+    print(WebsiteNOHttpNoSlash)
+    print(WebsiteNoWWWNoSlash)
+    return {'WebsiteNOHttp': WebsiteNOHttp,  'WebsiteNOHttpNoSlash': WebsiteNOHttpNoSlash, 'WebsiteNoHttpNoWWWNoSlash': WebsiteNoWWWNoSlash}
 
 def WriteResultsList(domainList, writeFile):
     websiteList = []
@@ -56,12 +95,17 @@ def WriteResultsList(domainList, writeFile):
 
         try:
             WebsiteNOHttpNoSlash = WebsiteNOHttp.replace('/',"")
-            IP = getIPAddressOfDomain(WebsiteNOHttpNoSlash)
+            ResolvedIPs = getIPAddressOfDomain(WebsiteNOHttpNoSlash)
+            IPString = ResolvedIPs[0]
+            IPList = ResolvedIPs[1]
             print("IP")
             print(IP)
 
         except Exception as e:
-            IP = str(e)
+            print("Exception happened here")
+            print(str(e))
+            IPString = str(e)
+            IPList = ['NaN','NaN','NaN','NaN','NaN','NaN','NaN','NaN','NaN','NaN','NaN','NaN']
 
         responseCODE = responseCODE.replace(',',';')
 
@@ -82,14 +126,32 @@ def WriteResultsList(domainList, writeFile):
         hopListSting = str(hopList).replace(',',';')
 
         DifferentDNSIPs = resolveIPFromDNS(WebsiteNoWWWNoSlash, listOfDNSs())
-        print("Jake Look here>>>>>>>>>>>")
+
+        print("DifferentDNSIPs")
         print(DifferentDNSIPs)
+
         DNSResolvedIPS = getResolvedIPs(DifferentDNSIPs)
+        print("DNSResolvedIPS:")
+        print(DNSResolvedIPS)
+
         DNSIPResponseCodes = IPResponseCodes(DNSResolvedIPS)
+
+        print("DNSIPResponseCodes")
+        print(DNSIPResponseCodes)
 
         DifferentDNSIPSting = str(DifferentDNSIPs).replace(',',';')
 
-        resultsList = [item, responseCODE, IP, hopNumber, hopListSting, DNSResolvedIPS[0], DNSResolvedIPS[1], DNSResolvedIPS[2],
+        print("IPList")
+        print(type(IPList))
+        print(IPList)
+
+        IpRequestResponseCodes = IPResponseCodes(IPList)
+        print("Jake Look here >>>>>>>>>>>")
+        print("IpRequestResponseCode")
+        print(IpRequestResponseCodes)
+        IpRequestResponseCodesString = str(IpRequestResponseCodes).replace(",",';')
+
+        resultsList = [item, responseCODE, IPString, IpRequestResponseCodesString, hopNumber, hopListSting, DNSResolvedIPS[0], DNSResolvedIPS[1], DNSResolvedIPS[2],
         DNSResolvedIPS[3], DNSResolvedIPS[4],DNSIPResponseCodes[0],DNSIPResponseCodes[1],DNSIPResponseCodes[2],DNSIPResponseCodes[3], DNSIPResponseCodes[4]]
 
         writeToCSVMethod(resultsList, writeFile)
@@ -97,27 +159,7 @@ def WriteResultsList(domainList, writeFile):
 
     AARNFile.close()
 
-def getIPResponseCode(IPAddress):
-    if IPAddress == '' or IPAddress == None:
-        return "NaN"
 
-    try:
-        print('http://'+IPAddress)
-        r = requests.get('http://'+IPAddress)
-        print(r)
-        print(r.status_code)
-        return r.status_code
-    except Exception as e:
-        return e
-
-def IPResponseCodes(IPList):
-    responseCodeList = []
-
-    for IP in IPList:
-        response = getIPResponseCode(IP)
-        responseCodeList.append(response)
-
-    return responseCodeList
 
 def checkErrorCodeOfOtherDNS(tupleList):
     for tupl in tupleList:
@@ -131,56 +173,77 @@ def checkIP():
         p.show()
     print(p)
 
+
+
+def writeObjectToCSV(obj, writeFile):
+    resultsList = [obj.domain, obj.responseCode, obj.ISP_DNS, obj.ISP_DNS_IPS, obj.ISP_IP_Response_Code ,obj.Traceroute , obj.Hops_to_Domain ,  obj.AARC_DNS_IPs, obj.Optus_DNS_IPs, obj.Google_DNS, obj.Cloudflare_DNS, obj.AARC_DNS_Response_Code, obj.Optus_DNS_Response_Code, obj.Google_DNS_Response_Code, obj.Cloudflare_DNS_Response_Code]
+
+    writeToCSVMethod(resultsList, writeFile)
+
+
+def CalculateListOfDomains(openFile, writeFile):
+    websiteList = []
+    with open(openFile) as fp:
+        Lines = fp.readlines()
+    for line in Lines:
+        websiteList.append(line.strip('\n'))
+
+
+    ourIP = str(getIPAddress())
+
+    #AARNFile =  open("Most_Visited.txt","w", encoding="utf-8")
+    for item in websiteList:
+        domain = item
+        domainStripped = stripDomainName(domain)
+        WebsiteNOHttp = domainStripped.get('WebsiteNOHttp')
+        WebsiteNOHttpNoSlash  = domainStripped.get('WebsiteNOHttpNoSlash')
+        WebsiteNoHttpNoWWWNoSlash  = domainStripped.get('WebsiteNoHttpNoWWWNoSlash')
+
+        obj = Domain(domain = domain,domainNoHTTP = WebsiteNOHttp,domainNoHTTPNoSlash = WebsiteNOHttpNoSlash, domainNoHTTPNoSlashNoWWW =  WebsiteNoHttpNoWWWNoSlash)
+        writeObjectToCSV(obj, "test.csv")
+
 def main():
 
-    #DifferentDNSIPs = resolveIPFromDNS("unblocked.to", listOfDNSs())
-    #print("Jake Look here>>>>>>>>>>>")
-    #print(DifferentDNSIPs)
-    #print(getResolvedIPs(DifferentDNSIPs))
-    #getIPResponseCode('54.79.28.199')
-    #checkIP()
-    # set optional Cloudflare public DNS server
-    #website = "tutorialspoint.com"
-    #result = resolveIPFromDNS(website, listOfDNSs())
-    #print (result)
-    #print(type(result))
-    #tryingDifferentDNS()
-    #getIPSpecificDNS()
-    #print(type(getMyDNS()))
-    #print(getMyDNS())
-    #getIPSpecificDNS()
-    #print(scapyTracerouteWithSR('cisco.com'))
+
+    print('10.127.5.17')
+    print(ipaddress.ip_address('10.127.5.17').is_private)
+    print('35.186.224.25')
+    print(ipaddress.ip_address('35.186.224.25').is_private)
+    #stripDomainName('https://www.wallumai.com.au/')
+
+
+    CalculateListOfDomains("CopyRight_Telstra.txt","test.csv")
+
+    r = requests.get("http://unblockproject.pw", auth=('user', 'pass'))
+    print(r)
+    #print(requestWebsite("unblockproject.pw"))
+
+    '''
+    domain = "https://www.stockspot.com.au/"
+    domainStripped = stripDomainName(domain)
+    WebsiteNOHttp = domainStripped.get('WebsiteNOHttp')
+    WebsiteNOHttpNoSlash  = domainStripped.get('WebsiteNOHttpNoSlash')
+    WebsiteNoHttpNoWWWNoSlash  = domainStripped.get('WebsiteNoHttpNoWWWNoSlash')
+
+    test = Domain(domain = domain,domainNoHTTP = WebsiteNOHttp,domainNoHTTPNoSlash = WebsiteNOHttpNoSlash, domainNoHTTPNoSlashNoWWW =  WebsiteNoHttpNoWWWNoSlash)
+
+    writeObjectToCSV(test, "test.csv")
+    '''
+    '''
+    InsertResultsDomain(test)
+
+    print(test.myfunc())
+
+    print(test.__dict__)
+    print(vars(test))
+
+    '''
+    '''
     openFile = "CopyRight_Telstra.txt"
-    writeFile = "Copy_Right_Telstra_Results_Optus.csv"
+    writeFile = "Copy_Right_Telstra_Results_UNI.csv"
     WriteResultsList(openFile, writeFile)
-
-    #print(CompareDNSResults("facebook.com"))
-    #print((getTraceRouteList("facebook.com")))
-    #CompareDNSResults("cisco.com")
-
-
-
-    '''
-    print(len(getTraceRouteList("cisco.com")))
-    print(getIPAddressOfDomain("cisco.com"))
-
-
-
-    dns_resolver = dns.resolver.Resolver()
-    dns_resolver.nameservers[0]
-    print(type(dns_resolver.nameservers[0]))
-    print(dns_resolver.nameservers[0])
-    print("DNS Traceroute Google DNS:")
-    print(str(DNSTraceroute('8.8.8.8')[0]))
-
     '''
 
-    #print("DNS Traceroute Default DNS:")
-    #print(str(DNSTraceroute(dns_resolver.nameservers[0])[0]))
-
-
-    #print(str(DNSTraceroute(dns_resolver.nameservers[0])[1]))
-    #WriteResultsList()
 
 
 

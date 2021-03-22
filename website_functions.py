@@ -8,14 +8,41 @@ from nslookup import Nslookup
 
 
 
-def requestWebsite(websiteURL):
-    r = requests.get("https://"+websiteURL, auth=('user', 'pass'))
+def requestWebsite(websiteURL, http, https):
+    print("Website URL: "+websiteURL)
+    protocol = "This is broken"
+    if(https == True):
+        protocol = "https"
+    if(http == True):
+        protocol = "http"
+    r = requests.get(protocol+"://"+websiteURL, auth=('user', 'pass'))
     print(r.status_code)
     print(r.headers['content-type'])
     results = {}
     results['RespondeCode'] = str(r.status_code)
     return results
 
+def getIPResponseCode(IPAddress):
+    if IPAddress == '' or IPAddress == None:
+        return "NaN"
+
+    try:
+        print('http://'+IPAddress)
+        r = requests.get('http://'+IPAddress)
+        print(r)
+        print(r.status_code)
+        return r.status_code
+    except Exception as e:
+        return e
+
+def IPResponseCodes(IPList):
+    responseCodeList = []
+
+    for IP in IPList:
+        response = getIPResponseCode(IP)
+        responseCodeList.append(response)
+
+    return responseCodeList
 
 
     #"https://www.judgments.fedcourt.gov.au/judgments/Judgments/fca/single/2020/2020fca0769"
@@ -53,11 +80,14 @@ def getIPAddressOfDomain(websiteURL):
 
     try:
         result = socket.gethostbyname_ex(websiteURL)
-        IPaddress = str(result[2]).replace(',',";")
-    except Exception as e:
-        IPaddress = str(e)
 
-    return IPaddress
+        IPAddressList = result[2]
+        IPaddressString = str(result[2]).replace(',',";")
+    except Exception as e:
+        IPaddressString = str(e)
+        IPAddressList = ['NaN', 'NaN']
+
+    return IPaddressString, IPAddressList
 
 
 def getIPAddress():
