@@ -1,0 +1,15 @@
+do number of hops to default DNS, see if it is one. If so, then if there is two hops, there must be a middlebox.
+Could set TTL = 1, or TTL = 2 to do so?
+
+IP blocking can be determined if IP address is accessible from another ISP, but not another.
+
+403 errors can be due to cloudflare blocking direct IP access
+If public DNS servers IP address varies from ISP to ISP, then, DNS injection is happening, especially if the response code varies
+
+if 451 error, this means that the IP is blocked, and another isp provides a different IP, then you know the 451 is dns blocked
+
+dns injection of public DNS's can be detected if the public DNS IP's are different (e.g. googles dns resolves different ips from different isps)
+
+can't use 403:forbidden errors because sometimes they cloudflare, maybe web-scrape these to determine if cloudflare?
+
+can't determine if it is domain name blocking, because sometimes IP's have been spoofed such that they go to a webpage with "content denied" and return a 200 response code.

@@ -5,6 +5,7 @@ import socket
 from scapy.all import *
 import dns.resolver
 from nslookup import Nslookup
+import ipaddress
 
 
 
@@ -33,7 +34,8 @@ def getIPResponseCode(IPAddress):
         print(r.status_code)
         return r.status_code
     except Exception as e:
-        return e
+        exce = str(e).replace(',',";")
+        return exce
 
 def IPResponseCodes(IPList):
     responseCodeList = []
@@ -83,8 +85,11 @@ def getIPAddressOfDomain(websiteURL):
 
         IPAddressList = result[2]
         IPaddressString = str(result[2]).replace(',',";")
+        print("IP ADDRESS STRING")
+        print(IPaddressString)
     except Exception as e:
         IPaddressString = str(e)
+        IPaddressString.replace(',',";")
         IPAddressList = ['NaN', 'NaN']
 
     return IPaddressString, IPAddressList
@@ -166,7 +171,7 @@ def scapyTracerouteWithSR(domain):
     try:
         ans, unans = sr(IP(dst=domain, ttl=(1,25),id=RandShort())/TCP(flags=0x2), timeout = 2)
     except Exception as e:
-        return [str(e)]
+        return [str(e).replace(',',";")]
     hops = []
     for snd,rcv in ans:
         print(snd.ttl, rcv.src, isinstance(rcv.payload, TCP))
@@ -239,3 +244,7 @@ def resolveIPFromDNS(hostname, DNSList):
 
 
     return compiledList
+
+
+def isIPPrivate(ip):
+    return ipaddress.ip_address(ip).is_private
