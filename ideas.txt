@@ -13,3 +13,5 @@ dns injection of public DNS's can be detected if the public DNS IP's are differe
 can't use 403:forbidden errors because sometimes they cloudflare, maybe web-scrape these to determine if cloudflare?
 
 can't determine if it is domain name blocking, because sometimes IP's have been spoofed such that they go to a webpage with "content denied" and return a 200 response code.
+
+might need to send entire html or selenium screenshot of page so we can find different phrases of blockpages

@@ -1,6 +1,7 @@
 from CSV_Methods import *
 from website_functions import *
 
+
 class ISP_Domain_Results_Interpreter:
 
     def __init__(self, name, ISP, ALL_ISP_LIST, domain_response_codes, default_DNS_response_codes, public_DNS_response_codes):
@@ -13,13 +14,12 @@ class ISP_Domain_Results_Interpreter:
         self.domain_response_codes = domain_response_codes
         self.default_DNS_response_codes = default_DNS_response_codes
         self.public_DNS_response_codes = public_DNS_response_codes
+        print(self.IPBlockingDetection())
+        print(self.dictOfAllDomainsOfAllISPs("CopyRight_Telstra.txt", "Cloudflare Block Page Public DNS"))
 
     def get_domains(self):
 
         return self.ISP.domains
-
-
-
 
     def any_IP_Private(self, ipList):
         any_ISP_Resolved_IP_Is_Private = False
@@ -68,10 +68,74 @@ class ISP_Domain_Results_Interpreter:
             list(dict.fromkeys(self.domain_response_codes.get(dom))),
             list(dict.fromkeys(self.default_DNS_response_codes.get(dom))),
             list(dict.fromkeys(self.public_DNS_response_codes.get(dom))),
+            self.printBlockPages(),
             self.blockingMethodAlgorithm(domain)],
             'Results/collated_results_interpreted.csv')
 
 
+    def dictOfAllDomainsOfAllISPs(self, domainFile, reason):
+        dictionaryOfDomains = {}
+
+
+        with open(domainFile) as fp:
+            Lines = fp.readlines()
+        for line in Lines:
+
+
+            line = line.rstrip("\n")
+            name = 'domain_{}'.format(stripDomainName(line).get('WebsiteNoHttpNoWWWNoSlash').replace('.',"").rstrip("\n"))
+            dictionaryOfDomains[name] = {}
+
+            for isp in self.All_ISPs:
+                print("Name: "+str(name))
+                print(isp.domains.keys())
+                domain = isp.domains.get(name)
+                print(domain.domain)
+
+                if reason == "Response Code":
+                    dictionaryOfDomains[name][isp.name] = domain.responseCode
+                elif reason == "Block Page":
+                    dictionaryOfDomains[name][isp.name] = domain.domainBlockPage
+                elif reason == "Cloudflare Block Page":
+                    dictionaryOfDomains[name][isp.name] = domain.domainCloudFlareBlockPage
+                elif reason == "Response Code Public DNS":
+                    dictionaryOfDomains[name][isp.name] = domain.Public_DNS_Response_Codes
+                elif reason == "Block Page Public DNS":
+                    dictionaryOfDomains[name][isp.name] = domain.Block_Page_Public_DNS_List
+                elif reason == "Cloudflare Block Page Public DNS":
+                    dictionaryOfDomains[name][isp.name] = domain.Cloudflare_Block_Page_Public_DNS_List
+                else:
+                    dictionaryOfDomains[name][isp.name] = "Didn't input a reason"
+
+        return dictionaryOfDomains
+
+    def IsWesbiteLive(self):
+        #check a domain in every ISP for a 200 response code and not a blockpage
+        #check every ip address as well returned by the DNS
+        return True
+
+    def DNSTamperingDetection(self):
+        #does default server return different DNS results from publci DNS, does the different IP's have different response codes and not blockpage
+        return True
+
+    def IPBlockingDetection(self):
+        ListOfResponseCodes = {}
+        ListOfBlockPages = {}
+        for isp in self.All_ISPs:
+            print("ISP: "+str(isp.name))
+            for dom in isp.domains:
+                print("DOM: "+str(dom))
+                domain = isp.domains.get(dom)
+                ListOfResponseCodes[isp.name] = domain.responseCode
+
+        #does ip give a different response code or vary in whether it returns a blockpage to other ISP's
+        print(ListOfResponseCodes)
+        return True
+
+    def DomainNameBlockingDetection(self):
+        #does ip address reutrn 200 and is not a blockpage, does domain not return 200
+        #and does domain name return different response code and non blockpage
+        return True
 
     def blockingMethodAlgorithm(self, domain):
         #Checking for DNS Tampering by comparing Public DNS IPs with ISP DNS IPs
@@ -108,3 +172,12 @@ class ISP_Domain_Results_Interpreter:
             return True
         else:
             return False
+
+    def printBlockPages(self):
+        domainBlockList = []
+        for dom in self.ISP.domains:
+            domain = self.ISP.domains.get(dom)
+            print(domain.domainBlockPage)
+            domainBlockList.append(domain.domainBlockPage)
+
+        return domainBlockList

@@ -36,32 +36,6 @@ def InsertResultsDomain(domainObject):
 
 
 
-def stripDomainName(domainName):
-    positionofWWW = domainName.find('://')
-
-    if "http" in domainName:
-        WebsiteNOHttp = domainName[positionofWWW+3:]
-    else:
-    #If http in domain name, change to + 3, if no http, change to +1
-        WebsiteNOHttp = domainName[positionofWWW+1:]
-
-
-    WebsiteNOHttpNoSlash = WebsiteNOHttp.replace('/',"")
-
-    if 'www.' == WebsiteNOHttp[0:4]:
-        print("change")
-        WebsiteNoWWWNoSlash = WebsiteNOHttp[4:]
-    else:
-        WebsiteNoWWWNoSlash = WebsiteNOHttp
-    if '/' == WebsiteNoWWWNoSlash[-1]:
-        WebsiteNoWWWNoSlash = WebsiteNoWWWNoSlash[0:-1]
-
-    print(domainName)
-    print(WebsiteNoWWWNoSlash)
-    print(WebsiteNOHttp)
-    print(WebsiteNOHttpNoSlash)
-    print(WebsiteNoWWWNoSlash)
-    return {'WebsiteNOHttp': WebsiteNOHttp,  'WebsiteNOHttpNoSlash': WebsiteNOHttpNoSlash, 'WebsiteNoHttpNoWWWNoSlash': WebsiteNoWWWNoSlash}
 
 def WriteResultsList(domainList, writeFile):
     websiteList = []
@@ -176,7 +150,8 @@ def checkIP():
 
 
 def writeObjectToCSV(obj, writeFile):
-    resultsList = [obj.domain, obj.responseCode, obj.ISP_DNS, obj.ISP_DNS_IPS, obj.ISP_IP_Response_Code ,obj.Traceroute , obj.Hops_to_Domain ,  obj.AARC_DNS_IPs, obj.Optus_DNS_IPs, obj.Google_DNS, obj.Cloudflare_DNS, obj.AARC_DNS_Response_Code, obj.Optus_DNS_Response_Code, obj.Google_DNS_Response_Code, obj.Cloudflare_DNS_Response_Code]
+    resultsList = [obj.domain, obj.responseCode, obj.ISP_DNS, obj.ISP_DNS_IPS, obj.ISP_IP_Response_Code ,obj.Traceroute , obj.Hops_to_Domain ,  obj.AARC_DNS_IPs, obj.Optus_DNS_IPs, obj.Google_DNS, obj.Cloudflare_DNS, obj.AARC_DNS_Response_Code, obj.Optus_DNS_Response_Code, obj.Google_DNS_Response_Code, obj.Cloudflare_DNS_Response_Code,
+    obj.domainBlockPage, obj.AARC_DNS_Block_Page, obj.Optus_DNS_Block_Page, obj.Google_DNS_Block_Page, obj.Cloudflare_DNS_Block_Page, obj.domainCloudFlareBlockPage, obj.AARC_DNS_Cloudflare_Block_Page, obj.Optus_DNS_Cloudflare_Block_Page, obj.Google_DNS_Cloudflare_Block_Page, obj.Cloudflare_DNS_Cloudflare_Block_Page]
 
     writeToCSVMethod(resultsList, writeFile)
 
@@ -233,7 +208,9 @@ def readCSVToDomain(file_names):
                     responseCode= row[1], ISP_DNS = row[2], ISP_DNS_IPS=row[3].strip('][').split(', '), ISP_IP_Response_Code=row[4].strip('][').split(', '), Traceroute=row[5].strip('][').split(', '), Hops_to_Domain=row[6], AARC_DNS_IPs=row[7].strip('][').split(', '),
                     Optus_DNS_IPs=row[8].strip('][').split(', '), Google_DNS=row[9].strip('][').split(', '), Cloudflare_DNS=row[10].strip('][').split(', '),AARC_DNS_Response_Code=row[11].strip('][').split(', '),
                     Optus_DNS_Response_Code=row[12].strip('][').split(', '),Google_DNS_Response_Code=row[13].strip('][').split(', '), Cloudflare_DNS_Response_Code=row[14].strip('][').split(', '),Resolved_IPs ="Read from CSV",
-                    Response_Code_Different_DNS_List ="Read from CSV")
+                    Response_Code_Different_DNS_List ="Read from CSV",
+                    Block_Page_Different_DNS_List ="Read from CSV",domainBlockPage=row[15], AARC_DNS_Block_Page = row[16].strip('][').split(', '), Optus_DNS_Block_Page = row[17].strip('][').split(', '), Google_DNS_Block_Page = row[18].strip('][').split(', '), Cloudflare_DNS_Block_Page = row[19].strip('][').split(', '), Cloudflare_Block_Page_Different_DNS_List = "Read from CSV",domainCloudFlareBlockPage = row[20],
+                    AARC_DNS_Cloudflare_Block_Page = row[21].strip('][').split(', '), Optus_DNS_Cloudflare_Block_Page = row[22].strip('][').split(', '), Google_DNS_Cloudflare_Block_Page = row[23].strip('][').split(', '), Cloudflare_DNS_Cloudflare_Block_Page = row[24].strip('][').split(', '))
 
                     line_count += 1
 
@@ -321,12 +298,11 @@ def main():
     #uncomment this to interrpet resutls
 
 
-    ISP_LIST = readCSVToDomain(['Optus_25Mar.csv','AARC_25Mar.csv', 'Daniel.csv', 'Max.csv'])
+    ISP_LIST = readCSVToDomain(['Optus_25Mar.csv','AARC_12Apr.csv',])
 
     print(ISP_LIST)
     allResponseCodes = getAllResponseCodes(ISP_LIST)
     writeCollatedResults(ISP_LIST,allResponseCodes)
-    eprint("WHAT")
 
 
 
@@ -341,7 +317,7 @@ def main():
 
 
     #Uncomment this for data collection
-    #CalculateListOfDomains("CopyRight_Telstra.txt","Results/Optus_25Mar.csv")
+    #CalculateListOfDomains("CopyRight_Telstra.txt","Results/AARC_12Apr.csv")
 
 
 
