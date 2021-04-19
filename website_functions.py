@@ -9,6 +9,11 @@ import ipaddress
 from detect_blockpages import *
 
 
+
+def str2bool(v):
+
+  return v.lower() in ("true")
+
 def tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
         return False
@@ -26,14 +31,18 @@ def text_from_html(body):
 
 
 def requestWebsite(websiteURL, http, https):
-    print("Website URL: "+websiteURL)
+
     protocol = "This is broken"
     if(https == True):
         protocol = "https"
     if(http == True):
         protocol = "http"
-    r = requests.get(protocol+"://"+websiteURL, auth=('user', 'pass'))
 
+    print("requesting: "+protocol+"://"+websiteURL)
+    r = requests.get(protocol+"://"+websiteURL, auth=('user', 'pass'))
+    print("WHY DO WE NOT GET HERE?")
+    print("r: ")
+    print(r)
     results = {}
     results['RespondeCode'] = str(r.status_code)
     results['BlockPage'] = detectBlockPage(text_from_html(r.text))
@@ -51,15 +60,22 @@ def getIPResponseCodeAndText(IPAddress):
         return {'Response_Code': r.status_code, 'Visible_Text': text_from_html(r.text)}
     except Exception as e:
         exce = str(e).replace(',',";")
-        return exce
+
+        return {'Response_Code': exce, 'Visible_Text': "N/A"}
 
 def IPResponseCodesAndText(IPList):
     responseCodeList = []
     blockPageList = []
     cloudFlareBlockPageList = []
 
+    print(IPList)
     for IP in IPList:
         response = getIPResponseCodeAndText(IP)
+
+        print("IP: "+str(IP))
+        print("Response: "+str(response))
+
+        print("Response: "+str(response))
         responseCodeList.append(response.get('Response_Code'))
         blockPageList.append(detectBlockPage(response.get('Visible_Text')))
         cloudFlareBlockPageList.append(detectCloudFlare(response.get('Visible_Text')))
@@ -108,6 +124,7 @@ def getIPAddressOfDomain(websiteURL):
         IPAddressList = result[2]
         IPaddressString = str(result[2]).replace(',',";")
 
+
     except Exception as e:
         IPaddressString = str(e)
         IPaddressString.replace(',',";")
@@ -132,24 +149,10 @@ def CompareDNSResults(website): #this may be legacy...might use the change DNS i
 
         ans, unans = traceroute(DNS_Address,l4=UDP(sport=RandShort())/DNS(qd=DNSQR(qname=website)),maxttl=15)
         #ans, unans = traceroute(DNS,l4=UDP(sport=RandShort())/DNS(qd=DNSQR(qname='google.com')),maxttl=15)
-        #print("Number of hops:")
-        #print(ans[TCP])
+
         for snd, _ in ans[TCP]:
             print(type(snd))
-            #print(snd, _)
-            #print(type(snd[IP]))
-            #print(snd[IP])
-            #print(type(snd[IP].ttl))
-            #print(snd[IP].ttl)
-            #print("what")
 
-        #print((ans[TCP]))
-        #print(type(ans))
-        #print(ans)
-        #print(type(unans))
-        #print(unans)
-        #for snd, rcv in ans:
-        #    print(snd.ttl, rcv.src, snd.sent_time, rcv.time)
 
 
 
@@ -179,11 +182,10 @@ def getTraceRouteList(host):
         else:
             hops.append(ans.res[0][1].src) # storing the src ip from ICMP error message
             ttl +=1
-        #print("ans.res:")
-        #print(ans.res) #Use this to  see the src and destination of each request, this lets u see the hops working in more details
+
     i = 1
     for hop in hops:
-        print(i, " " + hop)
+
         i+=1
     return hops
 
@@ -195,7 +197,7 @@ def scapyTracerouteWithSR(domain):
         return [str(e).replace(',',";")]
     hops = []
     for snd,rcv in ans:
-        #print(snd.ttl, rcv.src, isinstance(rcv.payload, TCP))
+
 
         if len(hops) > 0:
             if not isinstance(rcv.payload, TCP) or hops[-1] != rcv.src:
@@ -216,8 +218,6 @@ def getIPSpecificDNS():
     #this is legacy code I think
     answer = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname='www.thepacketgeek.com')), verbose=0)
 
-    #print(answer)
-    #print(answer[DNS].summary())
 
 
 def tryingDifferentDNS():
@@ -231,8 +231,7 @@ def tryingDifferentDNS():
     res.nameservers = [ '8.8.8.8', '2001:4860:4860::8888',
                         '8.8.4.4', '2001:4860:4860::8844' ]
     r = res.query('example.org', 'a')
-    #print(r)
-    #print(answer)
+
 
 
 def listOfDNSs():
@@ -255,10 +254,9 @@ def resolveIPFromDNS(hostname, DNSList):
         dns_query = Nslookup(dns_servers=[DNSIP])
 
         ips_record = dns_query.dns_lookup(domain)
-        #print(ips_record.response_full, ips_record.answer)
 
         soa_record = dns_query.soa_lookup(domain)
-        #print(soa_record.response_full, soa_record.answer)
+
         tuple = (DNSIP, ips_record.answer)
         compiledList.append(tuple)
         tuple = ()
@@ -268,7 +266,15 @@ def resolveIPFromDNS(hostname, DNSList):
 
 
 def isIPPrivate(ip):
-    return ipaddress.ip_address(ip).is_private
+    
+
+    try:
+        result = ipaddress.ip_address(ip).is_private
+
+    except:
+        result = "Bogon IP"
+
+    return result
 
 def stripDomainName(domainName):
     positionofWWW = domainName.find('://')
@@ -283,16 +289,12 @@ def stripDomainName(domainName):
     WebsiteNOHttpNoSlash = WebsiteNOHttp.replace('/',"")
 
     if 'www.' == WebsiteNOHttp[0:4]:
-        print("change")
+
         WebsiteNoWWWNoSlash = WebsiteNOHttp[4:]
     else:
         WebsiteNoWWWNoSlash = WebsiteNOHttp
     if '/' == WebsiteNoWWWNoSlash[-1]:
         WebsiteNoWWWNoSlash = WebsiteNoWWWNoSlash[0:-1]
 
-    print(domainName)
-    print(WebsiteNoWWWNoSlash)
-    print(WebsiteNOHttp)
-    print(WebsiteNOHttpNoSlash)
-    print(WebsiteNoWWWNoSlash)
+
     return {'WebsiteNOHttp': WebsiteNOHttp,  'WebsiteNOHttpNoSlash': WebsiteNOHttpNoSlash, 'WebsiteNoHttpNoWWWNoSlash': WebsiteNoWWWNoSlash}

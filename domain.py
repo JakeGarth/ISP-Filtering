@@ -5,7 +5,7 @@ class Domain:
     def __init__(self, domain="", domainNoHTTP = "", domainNoHTTPNoSlash = "", domainNoHTTPNoSlashNoWWW = "", responseCode="", ISP_DNS="", ISP_DNS_IPS="", ISP_IP_Response_Code=[], Hops_to_Domain=-1, Traceroute="", AARC_DNS_IPs="",
     Resolved_IPs = [], Optus_DNS_IPs="", Google_DNS="", Cloudflare_DNS="", Response_Code_Different_DNS_List={},AARC_DNS_Response_Code="", Optus_DNS_Response_Code="",Google_DNS_Response_Code="", Cloudflare_DNS_Response_Code="",
     Block_Page_Different_DNS_List ={}, AARC_DNS_Block_Page = "", Optus_DNS_Block_Page = "", Google_DNS_Block_Page = "", Cloudflare_DNS_Block_Page = "", domainBlockPage="",Cloudflare_Block_Page_Different_DNS_List = {},domainCloudFlareBlockPage="",
-    AARC_DNS_Cloudflare_Block_Page = "", Optus_DNS_Cloudflare_Block_Page = "", Google_DNS_Cloudflare_Block_Page = "", Cloudflare_DNS_Cloudflare_Block_Page = ""):
+    AARC_DNS_Cloudflare_Block_Page = "", Optus_DNS_Cloudflare_Block_Page = "", Google_DNS_Cloudflare_Block_Page = "", Cloudflare_DNS_Cloudflare_Block_Page = "", Default_DNS_Block_Page = [], Default_DNS_Cloudflare_Block_Page = []):
 
 
         #Raw Results
@@ -13,19 +13,27 @@ class Domain:
         self.domainNoHTTP =domainNoHTTP
         self.domainNoHTTPNoSlash = domainNoHTTPNoSlash
         self.domainNoHTTPNoSlashNoWWW = domainNoHTTPNoSlashNoWWW
+        self.domain_concat_name = 'domain_{}'.format(stripDomainName(domain).get('WebsiteNoHttpNoWWWNoSlash').replace('.',""))
 
+        if responseCode == "" or domainBlockPage == "" or domainCloudFlareBlockPage == "":
+            self.domainResults = self.return_Response_Code()
+        else:
+            self.domainResults = None
 
-        self.domainResults = self.return_Response_Code()
         if responseCode == "":
 
 
-            #bug here, I think that the return_Response_Code() is returning an error string
+            #bug here, I think that the return_Response_Code() is returning an error string, bug was caused when i was reading in results to the domain
+            #it was unecessarilly calling the return_Response_Code() method, pretty sure this issue is resolved
+
+
             self.responseCode = self.domainResults.get('ResponseCode')
         else:
+
             self.responseCode = responseCode
 
         if domainBlockPage == "":
-            print(self.domainResults.get('BlockPage'))
+
             self.domainBlockPage = self.domainResults.get('BlockPage')
         else:
 
@@ -35,6 +43,7 @@ class Domain:
 
             self.domainCloudFlareBlockPage = self.domainResults.get('CloudflareBlockPage')
         else:
+
             self.domainCloudFlareBlockPage = domainCloudFlareBlockPage
 
         if ISP_DNS == "":
@@ -43,20 +52,55 @@ class Domain:
             self.ISP_DNS = ISP_DNS
 
         if ISP_DNS_IPS == "":
-            self.ISP_DNS_IPS = self.return_ISP_IP_List()
+
+            ipList = self.return_ISP_IP_List()
+
+            if isinstance(ipList, str):
+                ipList = ipList.replace("[","").replace("]","").replace(" ","").replace("'","").split(";")
+
+
+            self.ISP_DNS_IPS = ipList
+
+
         else:
+
             try:
                 #splitting in to a list
-                ipList = ISP_DNS_IPS[0].replace(" ","").replace("'","").split(";")
+                ipList = ISP_DNS_IPS
                 self.ISP_DNS_IPS = ipList
+
+
+
             except Exception as e:
+
 
                 self.ISP_DNS_IPS = ISP_DNS_IPS
 
+
         if ISP_IP_Response_Code == []:
             self.ISP_IP_Response_Code = self.IPResponseCodesListFromString()
+
         else:
+
             self.ISP_IP_Response_Code = ISP_IP_Response_Code
+
+
+        if Default_DNS_Block_Page == []:
+
+
+            self.Default_DNS_Block_Page = IPResponseCodesAndText(self.ISP_DNS_IPS).get('blockPageList')
+
+        else:
+
+            self.Default_DNS_Block_Page = Default_DNS_Block_Page
+
+
+        if Default_DNS_Cloudflare_Block_Page == []:
+            self.Default_DNS_Cloudflare_Block_Page = IPResponseCodesAndText(self.ISP_DNS_IPS).get('cloudFlareBlockPageList')
+        else:
+            self.Default_DNS_Cloudflare_Block_Page = Default_DNS_Cloudflare_Block_Page
+
+
 
         if Traceroute == "":
             self.Traceroute = self.tracerouteToDomain()
@@ -177,12 +221,13 @@ class Domain:
         else:
             self.Google_DNS_Block_Page = Google_DNS_Block_Page
 
-        self.Block_Page_Public_DNS_List = self.Optus_DNS_Block_Page + self.Google_DNS_Block_Page
-
         if Cloudflare_DNS_Block_Page == "":
             self.Cloudflare_DNS_Block_Page = self.Block_Page_Different_DNS_List.get('Cloudflare')
         else:
             self.Cloudflare_DNS_Block_Page = Cloudflare_DNS_Block_Page
+
+        self.Block_Page_Public_DNS_List =  self.Google_DNS_Block_Page + self.Cloudflare_DNS_Block_Page
+
 
 
         if Cloudflare_Block_Page_Different_DNS_List == {}:
@@ -293,11 +338,16 @@ class Domain:
         if self.domain[0:5] == "http:":
             http = True
 
+
         try:
             results = requestWebsite(self.domainNoHTTP, http, https)
+            print("DO WE GET TO RESULTS?")
             return {'ResponseCode':results.get('RespondeCode'), 'BlockPage':results.get('BlockPage'), 'CloudflareBlockPage':results.get('CloudflareBlockPage')}
         except Exception as e:
-            return str(e).replace(',',';')
+            print("NAH WE GET TO EXCEPTION")
+            errorMessage = str(e).replace(',',';')
+            return {'ResponseCode':errorMessage, 'BlockPage':"N/A", 'CloudflareBlockPage':"N/A"}
+
 
 
     def return_ISP_IP_List(self):
@@ -312,7 +362,8 @@ class Domain:
 
     def IPResponseCodesListFromString(self):
 
-        IPResponsesList = (self.ISP_DNS_IPS.replace("[","").replace("]","").replace("'","").replace(" ","")).split(";")
+        IPResponsesList = self.ISP_DNS_IPS
+
 
         responseCodeList = IPResponseCodesAndText(IPResponsesList).get('responseCodeList')
 
